@@ -35,7 +35,6 @@ df <- df %>%
     -latitude,
     -longitude,
     -matches("customers...50..review.rate"),
-    -matches("X.Daily.Rev.per.2.guests..unless.limited.to.1."),
     -number_of_reviews
     )
 
@@ -66,7 +65,6 @@ df$rev_per_2_guest_clean <- as.numeric(df$rev_per_2_guest_clean)
 df$rev_per_2_guest <- NULL
 
 df$host_response_rate <- as.character(df$host_response_rate)
-df$host_response_rate  <- gsub("[$,]", "", df$host_response_rate)
 df <- df[!is.na(suppressWarnings(as.numeric(df$host_response_rate))), ]
 df$host_response_rate <- as.numeric(df$host_response_rate)
 
@@ -123,3 +121,60 @@ plot(log_model, which = 1, cex = 0.01)
 plot(log_model, which = 2, cex=0.7)
 ```
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+drop rows with property_type value occured fewer than 10 times. and check if property_type is good for adding into our model
+turns out it's no good...
+```{r}
+df_property_type <- df %>%
+  add_count(property_type) %>%
+  filter(n >= 10) %>%           
+  select(-n)
+boxplot(log_total_revenue ~ property_type, data = df_property_type,
+        main = "Log Revenue by Property Type",
+        ylab = "Log Total Revenue", las = 2, cex.axis = 0.7)
+```
+check if room_type is good for adding into our model
+```{r}
+boxplot(log_total_revenue ~ room_type, data = df,
+        main = "Log Revenue by Room Type",
+        ylab = "Log Total Revenue", las = 2, cex.axis = 0.7)
+```
+check if host_response_time is good for adding into our model
+```{r}
+boxplot(log_total_revenue ~ host_response_time, data = df,
+        main = "Log Revenue by host response time",
+        ylab = "Log Total Revenue", las = 2, cex.axis = 0.7)
+```
+
+from the box plot, we think room type is the best catagorical data to use in our model 
+
+```{r revenue log lm fit 1 with categorical, echo=FALSE}
+df$property_type <- as.factor(df$room_type)
+log_model_with_cat <- lm(
+  log_total_revenue ~ age_of_exp + price + review_scores_value + review_scores_rating + accommodates + room_type, 
+  data = df
+)
+summary(log_model_with_cat)
+```
+```{r log_revenue with cat plot residual vs fitted, echo=FALSE}
+plot(log_model_with_cat, which = 1, cex = 0.01)
+```
+```{r log_revenue_cat plot Q-Q plot, echo=FALSE}
+plot(log_model_with_cat, which = 2, cex=0.7)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
