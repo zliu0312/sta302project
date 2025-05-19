@@ -111,7 +111,7 @@ prelim_model <- lm(total_revenue_clean ~ age_of_exp + price + review_scores_valu
 summary(prelim_model)
 ```
 ```{r revenue log lm fit 1, echo=FALSE}
-log_model <- lm(log_total_revenue ~ age_of_exp + log_price + review_scores_value + sqrt_accommodates + host_response_rate, data = df)
+log_model <- lm(log_total_revenue ~ log_age_of_exp + log_price + review_scores_value + sqrt_accommodates + host_response_rate, data = df)
 summary(log_model)
 ```
 
@@ -160,7 +160,7 @@ from the box plot, we think room type is the best categorical data to use in our
 df$property_type <- as.factor(df$room_type)
 log_model_with_cat <- lm(
   log_total_revenue ~ log_age_of_exp + log_price + review_scores_value + sqrt_accommodates + host_response_rate + room_type, 
-  data = as.data.frame(df)
+  data = as.data.frame(df), y = TRUE
 )
 summary(log_model_with_cat)
 ```
@@ -170,8 +170,30 @@ plot(log_model_with_cat, which = 1, cex = 0.01)
 ```{r log_revenue_cat plot Q-Q plot, echo=FALSE}
 plot(log_model_with_cat, which = 2, cex=0.7)
 ```
+## Box-Cox Attempt
 
+```{r box-cox from log revenue}
+library(MASS)
+library(psych)
+b <- boxcox(log_model_with_cat)
+lambda <- b$x[which.max(b$y)]
+lambda
+geom_mean <- geometric.mean(df$log_total_revenue) # number of observations without NA
+log_total_revenue_transformed <- geom_mean ^ (1-lambda) * (df$log_total_revenue^lambda - 1) / lambda
+df$log_total_revenue_transformed <- log_total_revenue_transformed
+box_cox_log_model_with_cat <- lm(
+  log_total_revenue_transformed ~ log_age_of_exp + log_price + review_scores_value + sqrt_accommodates + host_response_rate + room_type, 
+  data = df, y = TRUE
+)
+summary(box_cox_log_model_with_cat)
+```
 
+```{r box-cox residual analysis}
+plot(box_cox_log_model_with_cat, which = 1, cex = 0.01)
+```
+```{r box-cox qq plot}
+plot(box_cox_log_model_with_cat, which = 2, cex=0.7)
+```
 
 
 
