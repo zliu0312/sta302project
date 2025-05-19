@@ -21,7 +21,7 @@ library(dplyr)
 
 df <- read_csv("AirBnB.csv")
 df <- df %>% 
-  select(
+  dplyr::select(
     -host_id,
     -host_name,
     -host_since_year,
@@ -72,6 +72,14 @@ df$price <- as.character(df$price)
 df$price <- as.numeric(gsub("[$[:space:]]", "", df$price))
 df <- df[!is.na(suppressWarnings(as.numeric(df$price))), ]
 df$price <- as.numeric(df$price)
+df$log_price <- log(df$price + 1)
+df$log_review_scores_value <- log(df$review_scores_value + 1)
+df$log_age_of_exp <- log(df$age_of_exp + 1)
+df$sqrt_age_of_exp <- sqrt(df$age_of_exp)
+df$log_review_scores_rating <- log(df$review_scores_rating + 1)
+df$log_accommodates <- log(df$accommodates + 1)
+df$sqrt_accommodates <- sqrt(df$accommodates)
+df$log_host_response_rate <- log(df$host_response_rate + 1)
 df$minimum_nights <- as.numeric(gsub("[$[:space:]]", "", df$minimum_nights))
 View(df)
 ```
@@ -81,29 +89,29 @@ View(df)
 You can also embed plots, for example:
 
 ```{r revenue plot numeric 1, echo=FALSE}
-pairs(~ total_revenue_clean + age_of_exp + price + review_scores_value, data = df, 
+pairs(~ total_revenue_clean + age_of_exp + price + review_scores_value + review_scores_rating, data = df, 
       main = "Scatterplot Matrix of AirBnB Variables", cex = 0.01)
 ```
 ```{r log_revenue plot numeric 1, echo=FALSE}
-pairs(~ log_total_revenue + age_of_exp + price + review_scores_value, data = df, 
+pairs(~ log_total_revenue + age_of_exp + log_age_of_exp  + price + log_price + review_scores_value + log_review_scores_value, data = df, 
       main = "Scatterplot Matrix of AirBnB Variables", cex = 0.01)
 ```
 
 ```{r revenue plot numeric 2}
-pairs(~ total_revenue_clean + review_scores_rating + accommodates + host_response_rate, data = df, 
+pairs(~ total_revenue_clean + accommodates + host_response_rate, data = df, 
       main = "Scatterplot Matrix of AirBnB Variables", cex = 0.01)
 ```
 ```{r log_revenue plot numeric 2}
-pairs(~ log_total_revenue + review_scores_rating + accommodates + host_response_rate, data = df, 
+pairs(~ log_total_revenue + accommodates + log_accommodates + sqrt_accommodates + host_response_rate + log_host_response_rate, data = df, 
       main = "Scatterplot Matrix of AirBnB Variables", cex = 0.01)
 ```
 
 ```{r revenue prelim lm fit 1, echo=FALSE}
-prelim_model <- lm(total_revenue_clean ~ age_of_exp + price + review_scores_value + review_scores_rating + accommodates, data = df)
+prelim_model <- lm(total_revenue_clean ~ age_of_exp + price + review_scores_value + host_response_rate + accommodates, data = df)
 summary(prelim_model)
 ```
 ```{r revenue log lm fit 1, echo=FALSE}
-log_model <- lm(log_total_revenue ~ age_of_exp + price + review_scores_value + accommodates, data = df)
+log_model <- lm(log_total_revenue ~ age_of_exp + log_price + review_scores_value + sqrt_accommodates + host_response_rate, data = df)
 summary(log_model)
 ```
 
@@ -146,13 +154,13 @@ boxplot(log_total_revenue ~ host_response_time, data = df,
         ylab = "Log Total Revenue", las = 2, cex.axis = 0.7)
 ```
 
-from the box plot, we think room type is the best catagorical data to use in our model 
+from the box plot, we think room type is the best categorical data to use in our model 
 
 ```{r revenue log lm fit 1 with categorical, echo=FALSE}
 df$property_type <- as.factor(df$room_type)
 log_model_with_cat <- lm(
-  log_total_revenue ~ age_of_exp + price + review_scores_value + review_scores_rating + accommodates + room_type, 
-  data = df
+  log_total_revenue ~ log_age_of_exp + log_price + review_scores_value + sqrt_accommodates + host_response_rate + room_type, 
+  data = as.data.frame(df)
 )
 summary(log_model_with_cat)
 ```
