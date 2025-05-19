@@ -111,19 +111,19 @@ prelim_model <- lm(total_revenue_clean ~ age_of_exp + price + review_scores_valu
 summary(prelim_model)
 ```
 ```{r revenue log lm fit 1, echo=FALSE}
-log_model <- lm(log_total_revenue ~ age_of_exp + log_price + review_scores_value + sqrt_accommodates + host_response_rate, data = df)
+log_model <- lm(log_total_revenue ~ log_age_of_exp + log_price + review_scores_value + sqrt_accommodates + host_response_rate, data = df)
 summary(log_model)
 ```
 
 ```{r revenue plot residual vs fitted, echo=FALSE}
-plot(prelim_model, which = 1, cex = 0.01)
+plot(prelim_model, which = 1, cex = 0.1)
 ```
 ```{r revenue plot Q-Q plot, echo=FALSE}
 plot(prelim_model, which = 2, cex=0.7)
 ```
 
 ```{r log_revenue plot residual vs fitted, echo=FALSE}
-plot(log_model, which = 1, cex = 0.01)
+plot(log_model, which = 1, cex = 0.05)
 ```
 ```{r log_revenue plot Q-Q plot, echo=FALSE}
 plot(log_model, which = 2, cex=0.7)
@@ -165,7 +165,7 @@ log_model_with_cat <- lm(
 summary(log_model_with_cat)
 ```
 ```{r log_revenue with cat plot residual vs fitted, echo=FALSE}
-plot(log_model_with_cat, which = 1, cex = 0.01)
+plot(log_model_with_cat, which = 1, cex = 0.05)
 ```
 ```{r log_revenue_cat plot Q-Q plot, echo=FALSE}
 plot(log_model_with_cat, which = 2, cex=0.7)
