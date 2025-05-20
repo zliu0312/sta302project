@@ -102,6 +102,28 @@ pairs(~ total_revenue_clean + age_of_exp  + price + review_scores_value + accomm
       main = "Scatterplot Matrix of AirBnB Predictors against Total Revenue", cex = 0.01) 
   # Notice that the relationships don't see too linear but there is a definite pattern. 
 
+```{r revenue prelim lm fit 1, echo=FALSE}
+prelim_model <- lm(total_revenue_clean ~ age_of_exp + price + review_scores_value + host_response_rate + accommodates, data = df)
+summary(prelim_model)
+```
+```{r revenue log lm fit 1, echo=FALSE}
+log_model <- lm(log_total_revenue ~ log_age_of_exp + log_price + review_scores_value + sqrt_accommodates + host_response_rate, data = df)
+summary(log_model)
+```
+
+```{r revenue plot residual vs fitted, echo=FALSE}
+plot(prelim_model, which = 1, cex = 0.1)
+```
+```{r revenue plot Q-Q plot, echo=FALSE}
+plot(prelim_model, which = 2, cex=0.7)
+```
+
+```{r log_revenue plot residual vs fitted, echo=FALSE}
+plot(log_model, which = 1, cex = 0.05)
+```
+```{r log_revenue plot Q-Q plot, echo=FALSE}
+plot(log_model, which = 2, cex=0.7)
+=======
 ```
 
 ```{r log_revenue plot numeric untransformed, echo=FALSE}
@@ -161,6 +183,8 @@ summary(log_model_with_cat)
 ## Residual Analysis
 Residual vs Fitted Plot: Looking for zero-mean, uni-variance distribution
 ```{r log_revenue with cat plot residual vs fitted, echo=FALSE}
+plot(log_model_with_cat, which = 1, cex = 0.05)
+=======
 plot(log_model_with_cat, which = 1, cex = 0.01) # Slight bend present, but zero mean 
 # satisfied and overall uniform. Bend may be caused by sparse data for extreme values
 ```
