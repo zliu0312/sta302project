@@ -16,6 +16,8 @@ This is an R Markdown document. Markdown is a simple formatting syntax for autho
 
 When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
+## Preliminary Data Wrangling and Cleaning
+
 ```{r df cleaning}
 library(dplyr)
 
@@ -49,7 +51,9 @@ df <- df %>%
     state = state_translated,
   )
 
+```
 
+```{r data reformatting and adding dummy variables}
 
 df$total_revenue <- as.character(df$total_revenue)
 df$total_revenue_clean <- gsub("[$,]", "", df$total_revenue)
@@ -81,86 +85,96 @@ df$log_accommodates <- log(df$accommodates + 1)
 df$sqrt_accommodates <- sqrt(df$accommodates)
 df$log_host_response_rate <- log(df$host_response_rate + 1)
 df$minimum_nights <- as.numeric(gsub("[$[:space:]]", "", df$minimum_nights))
-View(df)
 ```
 
-Summary of total revenue: 
-
-```{r total revenue summary}
-hist(df$total_revenue_clean/1000, breaks=20,
-     main="Histogram of the Distribution of Total Revenue",
-     xlab="Total Revenue ($1000)",)
-hist(df$log_total_revenue, breaks=20, 
-     main="Histogram of the Distribution of Log Total Revenue", 
-     xlab="Log of Total Revenue")
-boxplot(df$log_total_revenue, 
-        main="Boxplot of the Distribution of Log Total Revenue", 
-        ylab="Log of Total Revenue", 
-        cex=0.7)
+# Final Data Cleaning (Removing all columns unused in analysis)
+```{r final cleaned data}
+df$neighbourhood <- NULL
+df$city <- NULL
+df$state <- NULL
+df$bathrooms <- NULL
+df$bedrooms <- NULL
+df$beds <- NULL
+df$bed_type <- NULL
+df$guests_included <- NULL
+df$extra_people <- NULL
+df$minimum_nights <- NULL
+df$review_scores_accuracy <- NULL
+df$review_scores_rating <- NULL
+df$review_scores_cleaniness <- NULL
+df$review_scores_checkin <- NULL
+df$review_scores_communication <- NULL
+df$review_scores_location <- NULL
+df <- na.omit(df)
+head(df)
 ```
 
-## Including Plots
-
-You can also embed plots, for example:
-```{r revenue plot numeric 1}
-pairs(~ total_revenue_clean + age_of_exp + price + review_scores_value + accommodates + host_response_rate, data = df, 
-      main = "Scatterplot Matrix of AirBnB Variables", cex = 0.01)
+# Response Variable Analysis
+```{r histogram log_total_revenue}
+hist(df$total_revenue_clean/1000, breaks=40, main = "Histogram of the distribution of Total Revenue", xlab = "Total Revenue ($1000)") # Not normally distributed, likely not good for linear regression unless undergoes transformation
+```
+```{r histogram total_revenue}
+hist(df$log_total_revenue, breaks=20, main = "Histogram of the distribution of Log Total Revenue") # Looks more normally distributed, more fit for linear regression, thus we investigate log total revenue
 ```
 
-```{r log_revenue plot numeric 1, echo=FALSE}
+```{r box plot Log total_revenue}
+boxplot(df$log_total_revenue, main = "Boxplot of the distribution of Log Total Revenue", ylab = "Log Total Revenue") # helps better visualize distribution is less skewed
+```
+
+# Continuous Predictor Variables Analysis
+```{r total revenue plot numeric untransformed, echo=FALSE}
+pairs(~ total_revenue_clean + age_of_exp  + price + review_scores_value + accommodates + host_response_rate, data = df, 
+      main = "Scatterplot Matrix of AirBnB Predictors against Total Revenue", cex = 0.01) 
+  # Notice that the relationships don't see too linear but there is a definite pattern. 
+
+```
+
+```{r log_revenue plot numeric untransformed, echo=FALSE}
 pairs(~ log_total_revenue + age_of_exp + price + review_scores_value + accommodates + host_response_rate, data = df, 
-      main = "Scatterplot Matrix of Log Total Revenue and AirBnB Variables", cex = 0.01)
+      main = "Scatterplot Matrix of AirBnB Variables against Log Total Revenue", cex = 0.01)
+  # The predictors starts to look more like it is plausible for a transformation to be in a linear model
 ```
 
-```{r log revenue plot numeric 2}
+```{r log_revenue plot numeric transformed, echo=FALSE}
 pairs(~ log_total_revenue + log_age_of_exp + log_price + review_scores_value + sqrt_accommodates + host_response_rate, data = df, 
-      main = "Scatterplot Matrix of Transformed AirBnB Variables", cex = 0.01)
+      main = "Scatterplot Matrix of Transformed AirBnB Variables against Log Total Revenue", cex = 0.01)
+  # The predictors now look like they could be used to fit a linear model
 ```
 
-```{r revenue log lm fit 1, echo=FALSE}
-log_model <- lm(log_total_revenue ~ log_age_of_exp + log_price + review_scores_value + sqrt_accommodates + host_response_rate, data = df)
-summary(log_model)
-```
-
-```{r log_revenue plot residual vs fitted, echo=FALSE}
-plot(log_model, which = 1, cex = 0.05)
-```
-```{r log_revenue plot Q-Q plot, echo=FALSE}
-plot(log_model, which = 2, cex=0.7)
-```
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
-
-drop rows with property_type value occured fewer than 10 times. and check if property_type is good for adding into our model
-turns out it's no good...
+# Categorical Predictor Variables Analysis
+Checking Property Type
 ```{r}
 df_property_type <- df %>%
   add_count(property_type) %>%
   filter(n >= 10) %>%           
-  dplyr::select(-n)
+  select(-n)
 boxplot(log_total_revenue ~ property_type, data = df_property_type,
         main = "Log Revenue by Property Type",
-        ylab = "Log Total Revenue", las = 1, cex.axis = 0.7)
-
-View(df_property_type)
+        ylab = "Log Total Revenue", las = 1, cex.axis = 0.7) 
+# Not Very Suitable by observation
 ```
+
 check if room_type is good for adding into our model
 ```{r}
 boxplot(log_total_revenue ~ room_type, data = df,
         main = "Log Revenue by Room Type",
-        ylab = "Log Total Revenue", 
-        xlab = "Room Type", 
-        las = 1, cex.axis = 0.7)
+        ylab = "Log Total Revenue", xlab = "Room Type", las = 1, cex.axis = 0.7)
+# We see a good distinguishing factor between all 3 variables, especially 
+# between shared room and others
 ```
 check if host_response_time is good for adding into our model
 ```{r}
 boxplot(log_total_revenue ~ host_response_time, data = df,
         main = "Log Revenue by host response time",
         ylab = "Log Total Revenue", las = 1, cex.axis = 0.7)
+# We see a non-trivial relationship here, but it is marginal compared to 
+# room_type as a categorical predictor
 ```
 
 from the box plot, we think room type is the best categorical data to use in our model 
 
-```{r revenue log lm fit 1 with categorical, echo=FALSE}
+## Fitting Linear Model
+```{r revenue log lm fit, echo=FALSE}
 df$property_type <- as.factor(df$room_type)
 log_model_with_cat <- lm(
   log_total_revenue ~ log_age_of_exp + log_price + review_scores_value + sqrt_accommodates + host_response_rate + room_type, 
@@ -168,14 +182,27 @@ log_model_with_cat <- lm(
 )
 summary(log_model_with_cat)
 ```
+
+```{r linear model plot}
+plot(log_model_with_cat$fitted.values, df$log_total_revenue, cex = 0.01, abline(0,1, col="red"), main = "Fitted Log Total Revenue vs Actual Log Total Revenue", xlab = "Fitted Log Total Revenue", ylab = "Actual Log Total Revenue")
+```
+
+## Residual Analysis
+Residual vs Fitted Plot: Looking for zero-mean, uni-variance distribution
 ```{r log_revenue with cat plot residual vs fitted, echo=FALSE}
-plot(log_model_with_cat, which = 1, cex = 0.05)
+layout(matrix(c(1,1,2,3), 2, 2, byrow = TRUE))
+plot(log_model_with_cat, which = 1, cex = 0.01) # Slight bend present, but zero mean 
+# satisfied and overall uniform. Bend may be caused by sparse data for extreme values
+rstandardized <- rstandard(log_model_with_cat)
+hist(rstandardized, xlab = "Standardized Residuals", main = "Standardized Residual of Fitted Model")
+# Looks approx similar to N(0,1)
+plot(log_model_with_cat, which = 2, cex=0.7) # Deviations present at extreme values, 
+# but is pretty much on the line for theoretical quantiles between -2 and 2. 
 ```
-```{r log_revenue_cat plot Q-Q plot, echo=FALSE}
-plot(log_model_with_cat, which = 2, cex=0.7)
-```
+
 ## Box-Cox Attempt
 
+Attempt to optimize model with further Box-Cox transformation on top of log.
 ```{r box-cox from log revenue}
 library(MASS)
 library(psych)
@@ -193,16 +220,14 @@ summary(box_cox_log_model_with_cat)
 ```
 
 ```{r box-cox residual analysis}
-plot(box_cox_log_model_with_cat, which = 1, cex = 0.01)
+plot(box_cox_log_model_with_cat, which = 1, cex = 0.01) # Minimal improvement observed
 ```
 ```{r box-cox qq plot}
-plot(box_cox_log_model_with_cat, which = 2, cex=0.7)
+plot(box_cox_log_model_with_cat, which = 2, cex=0.7) # Minimal improvement observed
 ```
 
-
-
-
-
+We see that Box-Cox does not help out too much in our residuals, and it also reduces
+interpretability of our model by adding complexity to our transformed predictor.
 
 
 
