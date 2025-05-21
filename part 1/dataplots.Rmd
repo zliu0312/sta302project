@@ -16,7 +16,7 @@ This is an R Markdown document. Markdown is a simple formatting syntax for autho
 
 When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
-## Data Wrangling and Cleaning
+## Preliminary Data Wrangling and Cleaning
 
 ```{r df cleaning}
 library(dplyr)
@@ -85,6 +85,27 @@ df$log_accommodates <- log(df$accommodates + 1)
 df$sqrt_accommodates <- sqrt(df$accommodates)
 df$log_host_response_rate <- log(df$host_response_rate + 1)
 df$minimum_nights <- as.numeric(gsub("[$[:space:]]", "", df$minimum_nights))
+```
+
+# Final Data Cleaning (Removing all columns unused in analysis)
+```{r final cleaned data}
+df$neighbourhood <- NULL
+df$city <- NULL
+df$state <- NULL
+df$bathrooms <- NULL
+df$bedrooms <- NULL
+df$beds <- NULL
+df$bed_type <- NULL
+df$guests_included <- NULL
+df$extra_people <- NULL
+df$minimum_nights <- NULL
+df$review_scores_accuracy <- NULL
+df$review_scores_rating <- NULL
+df$review_scores_cleaniness <- NULL
+df$review_scores_checkin <- NULL
+df$review_scores_communication <- NULL
+df$review_scores_location <- NULL
+df <- na.omit(df)
 head(df)
 ```
 
@@ -93,7 +114,11 @@ head(df)
 hist(df$total_revenue_clean/1000, breaks=40, main = "Histogram of the distribution of Total Revenue", xlab = "Total Revenue ($1000)") # Not normally distributed, likely not good for linear regression unless undergoes transformation
 ```
 ```{r histogram total_revenue}
-hist(df$log_total_revenue, breaks=20, main = "Histogram of the distribution of Log Total Revenue", xlab = "Log Total Revenue") # Looks more normally distributed, more fit for linear regression, thus we investigate log total revenue
+hist(df$log_total_revenue, breaks=20, main = "Histogram of the distribution of Log Total Revenue") # Looks more normally distributed, more fit for linear regression, thus we investigate log total revenue
+```
+
+```{r box plot Log total_revenue}
+boxplot(df$log_total_revenue, main = "Boxplot of the distribution of Log Total Revenue", ylab = "Log Total Revenue") # helps better visualize distribution is less skewed
 ```
 
 # Continuous Predictor Variables Analysis
@@ -102,28 +127,6 @@ pairs(~ total_revenue_clean + age_of_exp  + price + review_scores_value + accomm
       main = "Scatterplot Matrix of AirBnB Predictors against Total Revenue", cex = 0.01) 
   # Notice that the relationships don't see too linear but there is a definite pattern. 
 
-```{r revenue prelim lm fit 1, echo=FALSE}
-prelim_model <- lm(total_revenue_clean ~ age_of_exp + price + review_scores_value + host_response_rate + accommodates, data = df)
-summary(prelim_model)
-```
-```{r revenue log lm fit 1, echo=FALSE}
-log_model <- lm(log_total_revenue ~ log_age_of_exp + log_price + review_scores_value + sqrt_accommodates + host_response_rate, data = df)
-summary(log_model)
-```
-
-```{r revenue plot residual vs fitted, echo=FALSE}
-plot(prelim_model, which = 1, cex = 0.1)
-```
-```{r revenue plot Q-Q plot, echo=FALSE}
-plot(prelim_model, which = 2, cex=0.7)
-```
-
-```{r log_revenue plot residual vs fitted, echo=FALSE}
-plot(log_model, which = 1, cex = 0.05)
-```
-```{r log_revenue plot Q-Q plot, echo=FALSE}
-plot(log_model, which = 2, cex=0.7)
-=======
 ```
 
 ```{r log_revenue plot numeric untransformed, echo=FALSE}
@@ -163,7 +166,7 @@ check if host_response_time is good for adding into our model
 ```{r}
 boxplot(log_total_revenue ~ host_response_time, data = df,
         main = "Log Revenue by host response time",
-        ylab = "Log Total Revenue", las = 2, cex.axis = 0.7)
+        ylab = "Log Total Revenue", las = 1, cex.axis = 0.7)
 # We see a non-trivial relationship here, but it is marginal compared to 
 # room_type as a categorical predictor
 ```
@@ -180,17 +183,19 @@ log_model_with_cat <- lm(
 summary(log_model_with_cat)
 ```
 
+```{r linear model plot}
+plot(log_model_with_cat$fitted.values, df$log_total_revenue, cex = 0.01, abline(0,1, col="red"), main = "Fitted Log Total Revenue vs Actual Log Total Revenue", xlab = "Fitted Log Total Revenue", ylab = "Actual Log Total Revenue")
+```
+
 ## Residual Analysis
 Residual vs Fitted Plot: Looking for zero-mean, uni-variance distribution
 ```{r log_revenue with cat plot residual vs fitted, echo=FALSE}
-plot(log_model_with_cat, which = 1, cex = 0.05)
-=======
+layout(matrix(c(1,1,2,3), 2, 2, byrow = TRUE))
 plot(log_model_with_cat, which = 1, cex = 0.01) # Slight bend present, but zero mean 
 # satisfied and overall uniform. Bend may be caused by sparse data for extreme values
-```
-
-Q-Q Plot: Check if data is on 45 degree line.
-```{r log_revenue_cat plot Q-Q plot, echo=FALSE}
+rstandardized <- rstandard(log_model_with_cat)
+hist(rstandardized, xlab = "Standardized Residuals", main = "Standardized Residual of Fitted Model")
+# Looks approx similar to N(0,1)
 plot(log_model_with_cat, which = 2, cex=0.7) # Deviations present at extreme values, 
 # but is pretty much on the line for theoretical quantiles between -2 and 2. 
 ```
@@ -223,14 +228,6 @@ plot(box_cox_log_model_with_cat, which = 2, cex=0.7) # Minimal improvement obser
 
 We see that Box-Cox does not help out too much in our residuals, and it also reduces
 interpretability of our model by adding complexity to our transformed predictor.
-
-## Final Data Cleaning (Removing all unused columns in analysis)
-```{r final cleaned data}
-df$
-
-
-
-
 
 
 
