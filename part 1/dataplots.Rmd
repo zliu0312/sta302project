@@ -131,13 +131,13 @@ pairs(~ total_revenue_clean + age_of_exp  + price + review_scores_value + accomm
 
 ```{r log_revenue plot numeric untransformed, echo=FALSE}
 pairs(~ log_total_revenue + age_of_exp + price + review_scores_value + accommodates + host_response_rate, data = df, 
-      main = "Scatterplot Matrix of AirBnB Variables agains Log Total Revenue", cex = 0.01)
+      main = "Scatterplot Matrix of AirBnB Variables against Log Total Revenue", cex = 0.01)
   # The predictors starts to look more like it is plausible for a transformation to be in a linear model
 ```
 
 ```{r log_revenue plot numeric transformed, echo=FALSE}
 pairs(~ log_total_revenue + log_age_of_exp + log_price + review_scores_value + sqrt_accommodates + host_response_rate, data = df, 
-      main = "Scatterplot Matrix of AirBnB Variables agains Log Total Revenue", cex = 0.01)
+      main = "Scatterplot Matrix of Transformed AirBnB Variables against Log Total Revenue", cex = 0.01)
   # The predictors now look like they could be used to fit a linear model
 ```
 
@@ -158,7 +158,7 @@ check if room_type is good for adding into our model
 ```{r}
 boxplot(log_total_revenue ~ room_type, data = df,
         main = "Log Revenue by Room Type",
-        ylab = "Log Total Revenue", las = 1, cex.axis = 0.7)
+        ylab = "Log Total Revenue", xlab = "Room Type", las = 1, cex.axis = 0.7)
 # We see a good distinguishing factor between all 3 variables, especially 
 # between shared room and others
 ```
