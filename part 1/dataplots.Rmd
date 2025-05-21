@@ -137,7 +137,7 @@ pairs(~ log_total_revenue + age_of_exp + price + review_scores_value + accommoda
 
 ```{r log_revenue plot numeric transformed, echo=FALSE}
 pairs(~ log_total_revenue + log_age_of_exp + log_price + review_scores_value + sqrt_accommodates + host_response_rate, data = df, 
-      main = "Scatterplot Matrix of Transformed AirBnB Variables against Log Total Revenue", cex = 0.01)
+      main = "Scatterplot Matrix of Transformed Predictors against Log Total Revenue", cex = 0.01)
   # The predictors now look like they could be used to fit a linear model
 ```
 
