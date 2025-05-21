@@ -114,7 +114,11 @@ head(df)
 hist(df$total_revenue_clean/1000, breaks=40, main = "Histogram of the distribution of Total Revenue", xlab = "Total Revenue ($1000)") # Not normally distributed, likely not good for linear regression unless undergoes transformation
 ```
 ```{r histogram total_revenue}
-hist(df$log_total_revenue, breaks=20, main = "Histogram of the distribution of Log Total Revenue", xlab = "Log Total Revenue") # Looks more normally distributed, more fit for linear regression, thus we investigate log total revenue
+hist(df$log_total_revenue, breaks=20, main = "Histogram of the distribution of Log Total Revenue") # Looks more normally distributed, more fit for linear regression, thus we investigate log total revenue
+```
+
+```{r box plot Log total_revenue}
+boxplot(df$log_total_revenue, main = "Boxplot of the distribution of Log Total Revenue", ylab = "Log Total Revenue") # helps better visualize distribution is less skewed
 ```
 
 # Continuous Predictor Variables Analysis
@@ -188,6 +192,13 @@ Residual vs Fitted Plot: Looking for zero-mean, uni-variance distribution
 ```{r log_revenue with cat plot residual vs fitted, echo=FALSE}
 plot(log_model_with_cat, which = 1, cex = 0.01) # Slight bend present, but zero mean 
 # satisfied and overall uniform. Bend may be caused by sparse data for extreme values
+```
+
+Standardized Residual Histogram: Looking for N(0,1)
+```{r log_revenue with cat plot residual vs fitted, echo=FALSE}
+rstandardized <- rstandard(log_model_with_cat)
+hist(rstandardized, xlab = "Standardized Residuals", main = "Standardized Residual of Fitted Model")
+# Looks approx similar to N(0,1)
 ```
 
 Q-Q Plot: Check if data is on 45 degree line.
