@@ -195,7 +195,7 @@ plot(log_model_with_cat, which = 1, cex = 0.01) # Slight bend present, but zero 
 ```
 
 Standardized Residual Histogram: Looking for N(0,1)
-```{r log_revenue with cat plot residual vs fitted, echo=FALSE}
+```{r log_revenue with cat plot sredsidual, echo=FALSE}
 rstandardized <- rstandard(log_model_with_cat)
 hist(rstandardized, xlab = "Standardized Residuals", main = "Standardized Residual of Fitted Model")
 # Looks approx similar to N(0,1)
