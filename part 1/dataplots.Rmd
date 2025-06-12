@@ -227,10 +227,32 @@ plot(box_cox_log_model_with_cat, which = 2, cex=0.7) # Minimal improvement obser
 ```
 
 We see that Box-Cox does not help out too much in our residuals, and it also reduces
-interpretability of our model by adding complexity to our transformed predictor.
+interpretability of our model by adding complexity to our transformed predictor.n :)
 
+```{r}
+log_model_with_cat.sresid <- rstandard(log_model_with_cat)
+plot(log_model_with_cat.sresid, type = "h")
+abline(h = 2,  col = "red")
+abline(h = -2, col = "red")
+idx_outlier <-which(abs(log_model_with_cat.sresid) > 2)
+names(idx_outlier) <- NULL
+idx_outlier
+```
+```{r}
+log_model_with_cat.cook <- cooks.distance(log_model_with_cat)
+plot(log_model_with_cat.cook, type = "h", ylab = "cooks distance")
+## 3. Add reference lines for common cutoffs
+cutoff_cook <- qf(0.5,
+                 df1 = (length(coef(log_model_with_cat)) - 1) + 1 ,
+                 df2 = nrow(df) - (length(coef(log_model_with_cat)) - 1) - 1)
 
-
+abline(h = cutoff_cook, col = "red")
+abline(h = 1, col = "blue")
+abline(h = 4 / nrow(df), col = "green")
+idx_leverage <-which(log_model_with_cat.cook>(4/nrow(df)))
+names(idx_leverage) <- NULL
+idx_leverage
+```
 
 
 
