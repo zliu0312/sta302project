@@ -253,9 +253,58 @@ idx_leverage <-which(log_model_with_cat.cook>(4/nrow(df)))
 names(idx_leverage) <- NULL
 idx_leverage
 ```
+```{r log model reducing room_type}
+log_model_reduced <- lm(
+  log_total_revenue ~ log_age_of_exp + log_price + review_scores_value + sqrt_accommodates + host_response_rate, 
+  data = as.data.frame(df), y = TRUE
+)
+summary(log_model_reduced)
+```
+```{r ANOVA original with reduced}
+anova(log_model_with_cat, log_model_reduced) # Shows original is better
+```
+```{r log model adding response time}
+log_model_with_resp_time <- lm(
+  log_total_revenue ~ log_age_of_exp + log_price + review_scores_value + sqrt_accommodates + host_response_rate + room_type + host_response_time,
+  data = as.data.frame(df), y = TRUE
+)
+summary(log_model_with_resp_time)
+```
+```{r ANOVA original with extra}
+anova(log_model_with_cat, log_model_with_resp_time) # Shows extra cat is significant
+```
+
+```{r}
+log_model_with_resp_time.sresid <- rstandard(log_model_with_resp_time)
+plot(log_model_with_resp_time.sresid, type = "h")
+abline(h = 2,  col = "red")
+abline(h = -2, col = "red")
+idx_outlier_new <-which(abs(log_model_with_resp_time.sresid) > 2)
+names(idx_outlier_new) <- NULL
+idx_outlier_new
 
 
+```
+```{r}
+log_model_with_resp_time.cook <- cooks.distance(log_model_with_resp_time)
+plot(log_model_with_resp_time.cook, type = "h", ylab = "cooks distance")
+## 3. Add reference lines for common cutoffs
+cutoff_cook <- qf(0.5,
+                 df1 = (length(coef(log_model_with_resp_time)) - 1) + 1 ,
+                 df2 = nrow(df) - (length(coef(log_model_with_resp_time)) - 1) - 1)
 
+abline(h = cutoff_cook, col = "red")
+abline(h = 1, col = "blue")
+abline(h = 4 / nrow(df), col = "green")
+idx_leverage_new <-which(log_model_with_resp_time.cook>(4/nrow(df)))
+names(idx_leverage_new) <- NULL
+idx_leverage_new
+```
+
+```{r}
+idx_leverage_and_outlier <- intersect(idx_leverage_new, idx_outlier_new)
+idx_leverage_and_outlier
+```
 
 
 
