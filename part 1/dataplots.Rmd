@@ -261,7 +261,7 @@ log_model_reduced <- lm(
 summary(log_model_reduced)
 ```
 ```{r ANOVA original with reduced}
-anova(log_model_with_cat, log_model_reduced) # Shows original is better
+anova(log_model_reduced, log_model_with_cat) # Shows original is better
 ```
 ```{r log model adding response time}
 log_model_with_resp_time <- lm(
