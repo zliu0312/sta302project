@@ -279,6 +279,17 @@ anova(log_model_with_cat, log_model_with_resp_time) # Shows extra cat is signifi
 vif(log_model_with_resp_time)
 ```
 ```{r}
+# Residual vs Fitted Plot on new model
+layout(matrix(c(1,1,2,3), 2, 2, byrow = TRUE))
+plot(log_model_with_resp_time, which = 1, cex = 0.01) # Slight bend present, but zero mean 
+# satisfied and overall uniform. Bend may be caused by sparse data for extreme values
+rstandardized <- rstandard(log_model_with_resp_time)
+hist(rstandardized, xlab = "Standardized Residuals", main = "Standardized Residual of Fitted Model")
+# Looks approx similar to N(0,1)
+plot(log_model_with_resp_time, which = 2, cex=0.7) # Deviations present at extreme values, 
+# but is pretty much on the line for theoretical quantiles between -2 and 2. 
+```
+```{r}
 log_model_with_resp_time.sresid <- rstandard(log_model_with_resp_time)
 plot(log_model_with_resp_time.sresid, type = "h")
 abline(h = 2,  col = "red")
