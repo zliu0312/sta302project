@@ -7,6 +7,7 @@ date: "2025-05-15"
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(readr)
+library(car)
 df <- read_csv("AirBnB.csv")
 ```
 
@@ -147,7 +148,7 @@ Checking Property Type
 df_property_type <- df %>%
   add_count(property_type) %>%
   filter(n >= 10) %>%           
-  select(-n)
+  dplyr::select(-n)
 boxplot(log_total_revenue ~ property_type, data = df_property_type,
         main = "Log Revenue by Property Type",
         ylab = "Log Total Revenue", las = 1, cex.axis = 0.7) 
@@ -275,6 +276,9 @@ anova(log_model_with_cat, log_model_with_resp_time) # Shows extra cat is signifi
 ```
 
 ```{r}
+vif(log_model_with_resp_time)
+```
+```{r}
 log_model_with_resp_time.sresid <- rstandard(log_model_with_resp_time)
 plot(log_model_with_resp_time.sresid, type = "h")
 abline(h = 2,  col = "red")
@@ -305,6 +309,23 @@ idx_leverage_new
 idx_leverage_and_outlier <- intersect(idx_leverage_new, idx_outlier_new)
 idx_leverage_and_outlier
 ```
+```{r}
+confint(log_model_with_resp_time)
+```
+```{r}
+summary(log_model_with_resp_time)
+data.frame(
+  model = c("log_model_with_cat", "log_model_with_resp_time"),
+  adjR2 = c(summary(log_model_with_cat)$adj.r.squared, summary(log_model_with_resp_time)$adj.r.squared),
+  AIC = c(AIC(log_model_with_cat), AIC(log_model_with_resp_time)),
+  BIC = c(BIC(log_model_with_cat), BIC(log_model_with_resp_time))
+)
+```
+```{r}
+library(leaps)
+best_subset <- regsubsets(log_total_revenue ~ log_age_of_exp + log_price + review_scores_value + sqrt_accommodates + host_response_rate + room_type + host_response_time, data=df, nvmax=10, nbest=1, really.big=TRUE,method="exhaustive")
+par(mfrow=c(1,2))
+plot(best_subset, scale="adjr2");plot(best_subset, scale="bic")
 
-
+```
 
