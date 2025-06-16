@@ -298,7 +298,19 @@ idx_outlier_new
 confint(log_model_with_resp_time)
 ```
 ## Final Verification using AIC, BIC, adjusted R^2, and Best Subsets
-```{r}
+
+```{r aic bic}
+summary(log_model_with_resp_time)
+data.frame(
+  model = c("log_model_with_cat", "log_model_with_resp_time"),
+  adjR2 = c(summary(log_model_with_cat)$adj.r.squared, summary(log_model_with_resp_time)$adj.r.squared),
+  AIC = c(AIC(log_model_with_cat), AIC(log_model_with_resp_time)),
+  BIC = c(BIC(log_model_with_cat), BIC(log_model_with_resp_time))
+  # Shows finalized model is better than prelim model in every regard
+)
+```
+
+```{r best subset}
 library(leaps)
 best_subset <- regsubsets(log_total_revenue ~ log_age_of_exp + log_price + review_scores_value + sqrt_accommodates + host_response_rate + room_type + host_response_time, data=df, nvmax=10, nbest=1, really.big=TRUE,method="exhaustive")
 par(mfrow=c(1,2))
