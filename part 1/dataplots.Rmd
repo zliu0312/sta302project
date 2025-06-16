@@ -230,30 +230,20 @@ plot(box_cox_log_model_with_cat, which = 2, cex=0.7) # Minimal improvement obser
 We see that Box-Cox does not help out too much in our residuals, and it also reduces
 interpretability of our model by adding complexity to our transformed predictor.n :)
 
-```{r}
+
+## Outlier and Leverage Analysis
+```{r outliers}
 log_model_with_cat.sresid <- rstandard(log_model_with_cat)
 plot(log_model_with_cat.sresid, type = "h")
-abline(h = 2,  col = "red")
-abline(h = -2, col = "red")
-idx_outlier <-which(abs(log_model_with_cat.sresid) > 2)
+abline(h = 4,  col = "red")
+abline(h = -4, col = "red")
+idx_outlier <-which(abs(log_model_with_cat.sresid) > 4)
 names(idx_outlier) <- NULL
-idx_outlier
+idx_outlier 
+# we clearly see no outliers are present, so no further analysis is needed on 
+# leverage/influential points
 ```
-```{r}
-log_model_with_cat.cook <- cooks.distance(log_model_with_cat)
-plot(log_model_with_cat.cook, type = "h", ylab = "cooks distance")
-## 3. Add reference lines for common cutoffs
-cutoff_cook <- qf(0.5,
-                 df1 = (length(coef(log_model_with_cat)) - 1) + 1 ,
-                 df2 = nrow(df) - (length(coef(log_model_with_cat)) - 1) - 1)
-
-abline(h = cutoff_cook, col = "red")
-abline(h = 1, col = "blue")
-abline(h = 4 / nrow(df), col = "green")
-idx_leverage <-which(log_model_with_cat.cook>(4/nrow(df)))
-names(idx_leverage) <- NULL
-idx_leverage
-```
+## Partial-F Test on Predictors
 ```{r log model reducing room_type}
 log_model_reduced <- lm(
   log_total_revenue ~ log_age_of_exp + log_price + review_scores_value + sqrt_accommodates + host_response_rate, 
@@ -275,10 +265,12 @@ summary(log_model_with_resp_time)
 anova(log_model_with_cat, log_model_with_resp_time) # Shows extra cat is significant
 ```
 
-```{r}
-vif(log_model_with_resp_time)
+## Multicollinearity Analysis (Variance Inflation)
+```{r vif check}
+vif(log_model_with_resp_time) # Shows everything is acceptable as VIF < 5
 ```
-```{r}
+## Final Residual Analysis
+```{r final model residual analysis}
 # Residual vs Fitted Plot on new model
 layout(matrix(c(1,1,2,3), 2, 2, byrow = TRUE))
 plot(log_model_with_resp_time, which = 1, cex = 0.01) # Slight bend present, but zero mean 
@@ -289,49 +281,23 @@ hist(rstandardized, xlab = "Standardized Residuals", main = "Standardized Residu
 plot(log_model_with_resp_time, which = 2, cex=0.7) # Deviations present at extreme values, 
 # but is pretty much on the line for theoretical quantiles between -2 and 2. 
 ```
-```{r}
+## Final Outlier Analysis
+```{r outliers analysis final}
 log_model_with_resp_time.sresid <- rstandard(log_model_with_resp_time)
 plot(log_model_with_resp_time.sresid, type = "h")
-abline(h = 2,  col = "red")
-abline(h = -2, col = "red")
-idx_outlier_new <-which(abs(log_model_with_resp_time.sresid) > 2)
+abline(h = 4,  col = "red")
+abline(h = -4, col = "red")
+idx_outlier_new <- which(abs(log_model_with_cat.sresid) > 4) # Since large data, use h_ii > 4
 names(idx_outlier_new) <- NULL
-idx_outlier_new
-
-
-```
-```{r}
-log_model_with_resp_time.cook <- cooks.distance(log_model_with_resp_time)
-plot(log_model_with_resp_time.cook, type = "h", ylab = "cooks distance")
-## 3. Add reference lines for common cutoffs
-cutoff_cook <- qf(0.5,
-                 df1 = (length(coef(log_model_with_resp_time)) - 1) + 1 ,
-                 df2 = nrow(df) - (length(coef(log_model_with_resp_time)) - 1) - 1)
-
-abline(h = cutoff_cook, col = "red")
-abline(h = 1, col = "blue")
-abline(h = 4 / nrow(df), col = "green")
-idx_leverage_new <-which(log_model_with_resp_time.cook>(4/nrow(df)))
-names(idx_leverage_new) <- NULL
-idx_leverage_new
+idx_outlier_new 
+# Shows no outliers present, no further analysis needed on leverage and influential points
 ```
 
-```{r}
-idx_leverage_and_outlier <- intersect(idx_leverage_new, idx_outlier_new)
-idx_leverage_and_outlier
-```
-```{r}
+## Confidence Interval of Finalized Predictors
+```{r confidence intervals}
 confint(log_model_with_resp_time)
 ```
-```{r}
-summary(log_model_with_resp_time)
-data.frame(
-  model = c("log_model_with_cat", "log_model_with_resp_time"),
-  adjR2 = c(summary(log_model_with_cat)$adj.r.squared, summary(log_model_with_resp_time)$adj.r.squared),
-  AIC = c(AIC(log_model_with_cat), AIC(log_model_with_resp_time)),
-  BIC = c(BIC(log_model_with_cat), BIC(log_model_with_resp_time))
-)
-```
+## Final Verification using AIC, BIC, adjusted R^2, and Best Subsets
 ```{r}
 library(leaps)
 best_subset <- regsubsets(log_total_revenue ~ log_age_of_exp + log_price + review_scores_value + sqrt_accommodates + host_response_rate + room_type + host_response_time, data=df, nvmax=10, nbest=1, really.big=TRUE,method="exhaustive")
