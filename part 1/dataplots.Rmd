@@ -234,7 +234,10 @@ interpretability of our model by adding complexity to our transformed predictor.
 ## Outlier and Leverage Analysis
 ```{r outliers}
 log_model_with_cat.sresid <- rstandard(log_model_with_cat)
-plot(log_model_with_cat.sresid, type = "h")
+plot(log_model_with_cat.sresid, type = "h",
+     main="Standardized Residual Plot of Preliminary Model",
+     ylab="Standardized Residual",
+     ylim=c(-5,5))
 abline(h = 4,  col = "red")
 abline(h = -4, col = "red")
 idx_outlier <-which(abs(log_model_with_cat.sresid) > 4)
@@ -245,16 +248,14 @@ idx_outlier
 ```
 ```{r cooks}
 log_model_with_cat.cook <- cooks.distance(log_model_with_cat)
-plot(log_model_with_cat.cook, type = "h", ylab = "cooks distance")
+plot(log_model_with_cat.cook, type = "h", ylab = "Cook's distance",
+     main = "Cook's Distance Plot of Preliminary Model")
 ## 3. Add reference lines for common cutoffs
-cutoff_cook <- qf(0.5,
-                 df1 = (length(coef(log_model_with_cat)) - 1) + 1 ,
-                 df2 = nrow(df) - (length(coef(log_model_with_cat)) - 1) - 1)
-
-abline(h = cutoff_cook, col = "red")
-abline(h = 1, col = "blue")
-idx_infl <-which(log_model_with_cat.cook > 1) 
-# uses D_ii > 1 for influential point as n is large with 5702 observations
+cook_crit <- qf(0.5, 8, 5702-8) # F_{0.5}(p+1, n-p-1) to determine D_i
+cook_crit # gives 0.9181235
+abline(h = cook_crit, col = "red")
+idx_infl <-which(log_model_with_cat.cook > cook_crit) 
+# uses D_ii > cook_crit for influential point.
 names(idx_infl) <- NULL
 idx_infl # Notice no overly influential points, so nothing problematic
 ```
@@ -342,3 +343,12 @@ plot(best_subset, scale="adjr2");plot(best_subset, scale="bic")
 
 ```
 
+## Cross Validation Test
+```{r cross validation 10 fold}
+library(boot)
+kfcv_result = cv.glm(data = as.data.frame(df), glmfit = log_model_with_resp_time, K = 10)
+kfcv_result$delta # result of final model for k=10
+kfcv_prelim = cv.glm(data = as.data.frame(df), glmfit = log_model_with_cat, K = 10)
+kfcv_prelim$delta # result of prelim model for k=10
+# Notice final model has smaller values of deltas, showing final model is better
+```
