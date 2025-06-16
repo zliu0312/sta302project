@@ -296,16 +296,32 @@ hist(rstandard(log_model_with_resp_time), xlab = "Standardized Residuals", main 
 plot(log_model_with_resp_time, which = 2, cex=0.7) # Deviations present at extreme values, 
 # but is pretty much on the line for theoretical quantiles between -2 and 2. 
 ```
-## Final Outlier Analysis
+## Final Outlier and Leverage Analysis
 ```{r outliers analysis final}
 log_model_with_resp_time.sresid <- rstandard(log_model_with_resp_time)
-plot(log_model_with_resp_time.sresid, type = "h")
+plot(log_model_with_resp_time.sresid, type = "h",
+     main="Standardized Residual Plot of Final Model",
+     ylab="Standardized Residual",
+     ylim=c(-5,5))
 abline(h = 4,  col = "red")
 abline(h = -4, col = "red")
 idx_outlier_new <- which(abs(log_model_with_cat.sresid) > 4) # Since large data, use h_ii > 4
 names(idx_outlier_new) <- NULL
 idx_outlier_new 
 # Shows no outliers present, no further analysis needed on leverage and influential points
+```
+```{r final cooks}
+log_model_with_resp_time.cook <- cooks.distance(log_model_with_resp_time)
+plot(log_model_with_resp_time.cook, type = "h", ylab = "Cook's distance",
+     main = "Cook's Distance Plot of Final Model")
+## 3. Add reference lines for common cutoffs
+cook_crit <- qf(0.5, 11, 5702-11) # F_{0.5}(p+1, n-p-1) to determine D_i
+cook_crit # gives 0.9402015
+abline(h = cook_crit, col = "red")
+idx_infl <-which(log_model_with_resp_time.cook > cook_crit) 
+# uses D_ii > cook_crit for influential point.
+names(idx_infl) <- NULL
+idx_infl # Notice no overly influential points, so nothing problematic
 ```
 
 ## Confidence Interval of Finalized Predictors
@@ -351,4 +367,6 @@ kfcv_result$delta # result of final model for k=10
 kfcv_prelim = cv.glm(data = as.data.frame(df), glmfit = log_model_with_cat, K = 10)
 kfcv_prelim$delta # result of prelim model for k=10
 # Notice final model has smaller values of deltas, showing final model is better
+kfcv_improvement = kfcv_prelim$delta[2] - kfcv_result$delta[2]
+kfcv_improvement
 ```
