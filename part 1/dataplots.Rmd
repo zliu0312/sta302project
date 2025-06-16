@@ -7,6 +7,7 @@ date: "2025-05-15"
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(readr)
+library(car)
 df <- read_csv("AirBnB.csv")
 ```
 
@@ -147,7 +148,7 @@ Checking Property Type
 df_property_type <- df %>%
   add_count(property_type) %>%
   filter(n >= 10) %>%           
-  select(-n)
+  dplyr::select(-n)
 boxplot(log_total_revenue ~ property_type, data = df_property_type,
         main = "Log Revenue by Property Type",
         ylab = "Log Total Revenue", las = 1, cex.axis = 0.7) 
@@ -227,13 +228,91 @@ plot(box_cox_log_model_with_cat, which = 2, cex=0.7) # Minimal improvement obser
 ```
 
 We see that Box-Cox does not help out too much in our residuals, and it also reduces
-interpretability of our model by adding complexity to our transformed predictor.
+interpretability of our model by adding complexity to our transformed predictor.n :)
 
 
+## Outlier and Leverage Analysis
+```{r outliers}
+log_model_with_cat.sresid <- rstandard(log_model_with_cat)
+plot(log_model_with_cat.sresid, type = "h")
+abline(h = 4,  col = "red")
+abline(h = -4, col = "red")
+idx_outlier <-which(abs(log_model_with_cat.sresid) > 4)
+names(idx_outlier) <- NULL
+idx_outlier 
+# we clearly see no outliers are present, so no further analysis is needed on 
+# leverage/influential points
+```
+## Partial-F Test on Predictors
+```{r log model reducing room_type}
+log_model_reduced <- lm(
+  log_total_revenue ~ log_age_of_exp + log_price + review_scores_value + sqrt_accommodates + host_response_rate, 
+  data = as.data.frame(df), y = TRUE
+)
+summary(log_model_reduced)
+```
+```{r ANOVA original with reduced}
+anova(log_model_reduced, log_model_with_cat) # Shows original is better
+```
+```{r log model adding response time}
+log_model_with_resp_time <- lm(
+  log_total_revenue ~ log_age_of_exp + log_price + review_scores_value + sqrt_accommodates + host_response_rate + room_type + host_response_time,
+  data = as.data.frame(df), y = TRUE
+)
+summary(log_model_with_resp_time)
+```
+```{r ANOVA original with extra}
+anova(log_model_with_cat, log_model_with_resp_time) # Shows extra cat is significant
+```
 
+## Multicollinearity Analysis (Variance Inflation)
+```{r vif check}
+vif(log_model_with_resp_time) # Shows everything is acceptable as VIF < 5
+```
+## Final Residual Analysis
+```{r final model residual analysis}
+# Residual vs Fitted Plot on new model
+layout(matrix(c(1,1,2,3), 2, 2, byrow = TRUE))
+plot(log_model_with_resp_time, which = 1, cex = 0.01) # Slight bend present, but zero mean 
+# satisfied and overall uniform. Bend may be caused by sparse data for extreme values
+rstandardized <- rstandard(log_model_with_resp_time)
+hist(rstandardized, xlab = "Standardized Residuals", main = "Standardized Residual of Fitted Model")
+# Looks approx similar to N(0,1)
+plot(log_model_with_resp_time, which = 2, cex=0.7) # Deviations present at extreme values, 
+# but is pretty much on the line for theoretical quantiles between -2 and 2. 
+```
+## Final Outlier Analysis
+```{r outliers analysis final}
+log_model_with_resp_time.sresid <- rstandard(log_model_with_resp_time)
+plot(log_model_with_resp_time.sresid, type = "h")
+abline(h = 4,  col = "red")
+abline(h = -4, col = "red")
+idx_outlier_new <- which(abs(log_model_with_cat.sresid) > 4) # Since large data, use h_ii > 4
+names(idx_outlier_new) <- NULL
+idx_outlier_new 
+# Shows no outliers present, no further analysis needed on leverage and influential points
+```
 
+## Confidence Interval of Finalized Predictors
+```{r confidence intervals}
+confint(log_model_with_resp_time)
+```
+## Final Verification using AIC, BIC, adjusted R^2, and Best Subsets
+```{r}
+summary(log_model_with_resp_time)
+data.frame(
+  model = c("log_model_with_cat", "log_model_with_resp_time"),
+  adjR2 = c(summary(log_model_with_cat)$adj.r.squared, summary(log_model_with_resp_time)$adj.r.squared),
+  AIC = c(AIC(log_model_with_cat), AIC(log_model_with_resp_time)),
+  BIC = c(BIC(log_model_with_cat), BIC(log_model_with_resp_time))
+)
+# 
+```
+```{r}
+library(leaps)
+best_subset <- regsubsets(log_total_revenue ~ log_age_of_exp + log_price + review_scores_value + sqrt_accommodates + host_response_rate + room_type + host_response_time, data=df, nvmax=10, nbest=1, really.big=TRUE, method="exhaustive")
+par(mfrow=c(1,2))
+plot(best_subset, scale="adjr2");plot(best_subset, scale="bic")
 
-
-
-
+```
 
