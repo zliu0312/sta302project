@@ -243,6 +243,21 @@ idx_outlier
 # we clearly see no outliers are present, so no further analysis is needed on 
 # leverage/influential points
 ```
+```{r cooks}
+log_model_with_cat.cook <- cooks.distance(log_model_with_cat)
+plot(log_model_with_cat.cook, type = "h", ylab = "cooks distance")
+## 3. Add reference lines for common cutoffs
+cutoff_cook <- qf(0.5,
+                 df1 = (length(coef(log_model_with_cat)) - 1) + 1 ,
+                 df2 = nrow(df) - (length(coef(log_model_with_cat)) - 1) - 1)
+
+abline(h = cutoff_cook, col = "red")
+abline(h = 1, col = "blue")
+idx_infl <-which(log_model_with_cat.cook > 1) 
+# uses D_ii > 1 for influential point as n is large with 5702 observations
+names(idx_infl) <- NULL
+idx_infl # Notice no overly influential points, so nothing problematic
+```
 ## Partial-F Test on Predictors
 ```{r log model reducing room_type}
 log_model_reduced <- lm(
